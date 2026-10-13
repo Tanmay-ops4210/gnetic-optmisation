@@ -5,6 +5,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+# Direct Matplotlib cache directory to writable /tmp for serverless/Lambda compatibility
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt

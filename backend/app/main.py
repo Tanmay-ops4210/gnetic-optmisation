@@ -21,7 +21,10 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"init_db error on module load: {e}")
 
 app.include_router(router, prefix='/api')
 

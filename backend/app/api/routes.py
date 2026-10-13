@@ -12,7 +12,6 @@ import joblib
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, Response
 from sklearn.model_selection import train_test_split
-from ..reporting.report_maker import PDFReportMaker
 
 from ..schemas.schemas import (
     DatasetInfo, DatasetAnalysis, ColumnInfo, DatasetConfigUpdate,
@@ -655,6 +654,7 @@ async def download_report(opt_id: str):
     }
     
     try:
+        from ..reporting.report_maker import PDFReportMaker
         report_maker = PDFReportMaker(result_data, metadata)
         pdf_bytes = report_maker.generate()
     except Exception as e:
