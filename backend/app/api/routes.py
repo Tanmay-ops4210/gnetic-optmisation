@@ -719,10 +719,13 @@ async def make_prediction(req: PredictionRequest):
 
 @router.get('/history')
 async def get_history():
-    db = get_db()
-    rows = db.execute('SELECT * FROM history ORDER BY created_at DESC').fetchall()
-    db.close()
-    return [dict(r) for r in rows]
+    try:
+        db = get_db()
+        rows = db.execute('SELECT * FROM history ORDER BY created_at DESC').fetchall()
+        db.close()
+        return [dict(r) for r in rows]
+    except Exception:
+        return []
 
 @router.get('/history/{history_id}')
 async def get_history_item(history_id: str):
@@ -752,20 +755,24 @@ async def delete_history(history_id: str):
 
 @router.get('/stats')
 async def get_stats():
-    db = get_db()
-    datasets_count = db.execute('SELECT COUNT(*) FROM datasets').fetchone()[0]
-    opts_count = db.execute("SELECT COUNT(*) FROM optimizations WHERE status='completed'").fetchone()[0]
-    
-    history = db.execute('SELECT score, optimization_method FROM history').fetchall()
-    db.close()
-    
-    best_score = max([float(r['score']) for r in history]) if history else 0.0
-    
-    models_tested = opts_count * 50
-    
-    return {
-        'datasets_processed': datasets_count,
-        'optimizations_completed': opts_count,
-        'best_score': best_score,
-        'models_tested': models_tested
-    }
+    try:
+        db = get_db()
+        datasets_count = db.execute('SELECT COUNT(*) FROM datasets').fetchone()[0]
+        opts_count = db.execute("SELECT COUNT(*) FROM optimizations WHERE status='completed'").fetchone()[0]
+        history = db.execute('SELECT score, optimization_method FROM history').fetchall()
+        db.close()
+        best_score = max([float(r['score']) for r in history]) if history else 0.0
+        models_tested = opts_count * 50
+        return {
+            'datasets_processed': datasets_count,
+            'optimizations_completed': opts_count,
+            'best_score': best_score,
+            'models_tested': models_tested
+        }
+    except Exception:
+        return {
+            'datasets_processed': 0,
+            'optimizations_completed': 0,
+            'best_score': 0.0,
+            'models_tested': 0
+        }

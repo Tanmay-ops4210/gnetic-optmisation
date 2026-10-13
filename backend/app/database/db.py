@@ -17,15 +17,14 @@ def _get_db_path() -> str:
 
 DB_PATH = _get_db_path()
 
-def get_db() -> sqlite3.Connection:
-    if not os.path.exists(DB_PATH):
-        init_db()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+_initialized = False
 
 def init_db():
-    conn = get_db()
+    global _initialized
+    if _initialized and os.path.exists(DB_PATH):
+        return
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -72,3 +71,10 @@ def init_db():
     
     conn.commit()
     conn.close()
+    _initialized = True
+
+def get_db() -> sqlite3.Connection:
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
