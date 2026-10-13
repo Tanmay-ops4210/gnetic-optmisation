@@ -1,9 +1,25 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'automl.db')
+def _get_db_path() -> str:
+    if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return '/tmp/automl.db'
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    db_file = os.path.join(base_dir, 'automl.db')
+    try:
+        test_file = os.path.join(base_dir, '.write_check')
+        with open(test_file, 'w') as f:
+            f.write('')
+        os.remove(test_file)
+        return db_file
+    except OSError:
+        return '/tmp/automl.db'
+
+DB_PATH = _get_db_path()
 
 def get_db() -> sqlite3.Connection:
+    if not os.path.exists(DB_PATH):
+        init_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn

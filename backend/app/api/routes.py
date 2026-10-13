@@ -33,10 +33,31 @@ from ..optimization.search_optimizer import run_grid_search, run_random_search
 
 router = APIRouter()
 
-UPLOADS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'uploads')
-MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'saved_models')
-os.makedirs(UPLOADS_DIR, exist_ok=True)
-os.makedirs(MODELS_DIR, exist_ok=True)
+def _get_storage_dirs():
+    if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        uploads = '/tmp/uploads'
+        models = '/tmp/saved_models'
+    else:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        uploads = os.path.join(base_dir, 'uploads')
+        models = os.path.join(base_dir, 'saved_models')
+        try:
+            os.makedirs(uploads, exist_ok=True)
+            os.makedirs(models, exist_ok=True)
+            test_f = os.path.join(uploads, '.write_check')
+            with open(test_f, 'w') as f:
+                f.write('')
+            os.remove(test_f)
+            return uploads, models
+        except OSError:
+            uploads = '/tmp/uploads'
+            models = '/tmp/saved_models'
+
+    os.makedirs(uploads, exist_ok=True)
+    os.makedirs(models, exist_ok=True)
+    return uploads, models
+
+UPLOADS_DIR, MODELS_DIR = _get_storage_dirs()
 
 # In-memory state stores
 optimization_states: Dict[str, dict] = {}

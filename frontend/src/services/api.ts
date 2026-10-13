@@ -1,11 +1,12 @@
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 import type {
   DatasetInfo, DatasetAnalysis, OptimizationConfig,
   OptimizationStatus, OptimizationResult, HistoryItem, Stats, PredictionResponse
 } from '../types'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_BASE_URL}/api`,
   timeout: 60000,
 })
 
@@ -54,8 +55,15 @@ export const optimizationApi = {
   control: async (id: string, action: string): Promise<void> => {
     await api.post(`/optimization/${id}/control`, { action })
   },
-  getModelDownloadUrl: (id: string): string => `/api/optimization/${id}/download-model`,
-  getReportDownloadUrl: (id: string): string => `/api/optimization/${id}/download-report`,
+  getModelDownloadUrl: (id: string): string => `${API_BASE_URL}/api/optimization/${id}/download-model`,
+  getReportDownloadUrl: (id: string): string => `${API_BASE_URL}/api/optimization/${id}/download-report`,
+}
+
+export const healthApi = {
+  check: async (): Promise<{ status: string }> => {
+    const res = await axios.get(`${API_BASE_URL}/health`)
+    return res.data
+  },
 }
 
 export const predictionApi = {
