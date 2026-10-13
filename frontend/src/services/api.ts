@@ -54,6 +54,8 @@ export const optimizationApi = {
   control: async (id: string, action: string): Promise<void> => {
     await api.post(`/optimization/${id}/control`, { action })
   },
+  getModelDownloadUrl: (id: string): string => `/api/optimization/${id}/download-model`,
+  getReportDownloadUrl: (id: string): string => `/api/optimization/${id}/download-report`,
 }
 
 export const predictionApi = {

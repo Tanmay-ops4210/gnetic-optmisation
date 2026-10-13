@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
-import { Trophy, Clock, Cpu, ArrowRight } from 'lucide-react'
+import { Trophy, Clock, Cpu, ArrowRight, Download, FileText } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
 import Alert from '../components/Alert'
@@ -32,9 +32,29 @@ export default function Results() {
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       <PageHeader title="Optimization Results" subtitle={`Result ID: ${id}`}>
-        <button className="btn-primary flex items-center gap-2" onClick={() => navigate(`/prediction/${id}`)}>
-          Use Model for Prediction <ArrowRight className="w-4 h-4" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href={optimizationApi.getModelDownloadUrl(id!)}
+            download
+            className="btn-secondary flex items-center gap-2 hover:border-brand-500 transition-colors"
+            title="Download trained model file (.joblib)"
+          >
+            <Download className="w-4 h-4 text-brand-400" />
+            <span>Download Model</span>
+          </a>
+          <a
+            href={optimizationApi.getReportDownloadUrl(id!)}
+            download
+            className="btn-secondary flex items-center gap-2 hover:border-emerald-500 transition-colors"
+            title="Download PDF report with model explanations and graphs"
+          >
+            <FileText className="w-4 h-4 text-emerald-400" />
+            <span>Download Report (PDF)</span>
+          </a>
+          <button className="btn-primary flex items-center gap-2" onClick={() => navigate(`/prediction/${id}`)}>
+            Use Model for Prediction <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

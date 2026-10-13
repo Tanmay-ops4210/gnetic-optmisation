@@ -10,8 +10,9 @@ import numpy as np
 import pandas as pd
 import joblib
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sklearn.model_selection import train_test_split
+from ..reporting.report_maker import PDFReportMaker
 
 from ..schemas.schemas import (
     DatasetInfo, DatasetAnalysis, ColumnInfo, DatasetConfigUpdate,
@@ -580,6 +581,72 @@ async def get_optimization_results(opt_id: str):
         raise HTTPException(400, 'Optimization is not completed yet')
         
     return json.loads(row['result'])
+
+@router.get('/optimization/{opt_id}/download-model')
+async def download_model(opt_id: str):
+    model_path = os.path.join(MODELS_DIR, f'{opt_id}.joblib')
+    if not os.path.exists(model_path):
+        raise HTTPException(404, 'Trained model file not found')
+    
+    db = get_db()
+    row = db.execute('SELECT result FROM optimizations WHERE id=?', (opt_id,)).fetchone()
+    db.close()
+    
+    best_model_name = 'model'
+    if row and row['result']:
+        try:
+            r = json.loads(row['result'])
+            best_model_name = r.get('best_model', 'model').replace(' ', '_').lower()
+        except Exception:
+            pass
+            
+    filename = f'best_model_{best_model_name}_{opt_id[:8]}.joblib'
+    return FileResponse(
+        model_path,
+        media_type='application/octet-stream',
+        filename=filename
+    )
+
+@router.get('/optimization/{opt_id}/download-report')
+async def download_report(opt_id: str):
+    db = get_db()
+    opt_row = db.execute('SELECT * FROM optimizations WHERE id=?', (opt_id,)).fetchone()
+    if not opt_row:
+        db.close()
+        raise HTTPException(404, 'Optimization not found')
+        
+    if opt_row['status'] != 'completed' or not opt_row['result']:
+        db.close()
+        raise HTTPException(400, 'Optimization is not completed yet')
+        
+    result_data = json.loads(opt_row['result'])
+    
+    dataset_name = 'Uploaded Dataset'
+    if opt_row['dataset_id']:
+        ds_row = db.execute('SELECT original_name FROM datasets WHERE id=?', (opt_row['dataset_id'],)).fetchone()
+        if ds_row:
+            dataset_name = ds_row['original_name']
+    db.close()
+    
+    metadata = {
+        'dataset_name': dataset_name,
+        'created_at': opt_row['created_at'],
+    }
+    
+    try:
+        report_maker = PDFReportMaker(result_data, metadata)
+        pdf_bytes = report_maker.generate()
+    except Exception as e:
+        raise HTTPException(500, f'Error generating PDF report: {e}')
+        
+    filename = f'automl_report_{opt_id[:8]}.pdf'
+    return Response(
+        content=pdf_bytes,
+        media_type='application/pdf',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        }
+    )
 
 @router.post('/optimization/{opt_id}/control')
 async def control_optimization(opt_id: str, action_data: dict):

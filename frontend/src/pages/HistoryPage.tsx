@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trash2, BarChart2 } from 'lucide-react'
+import { Trash2, BarChart2, Download, FileText } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Alert from '../components/Alert'
 import Spinner from '../components/Spinner'
-import { historyApi } from '../services/api'
+import { historyApi, optimizationApi } from '../services/api'
 import type { HistoryItem } from '../types'
 import { formatDate } from '../utils/format'
 
@@ -69,11 +69,29 @@ export default function HistoryPage() {
                     <td className="py-3 px-4 text-brand-300 font-medium">{item.model_name}</td>
                     <td className="py-3 px-4 text-emerald-400 font-bold">{(item.score * 100).toFixed(2)}%</td>
                     <td className="py-3 px-4 text-slate-500">{formatDate(item.created_at)}</td>
-                    <td className="py-3 px-4 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1.5 text-brand-400 hover:bg-brand-900/50 rounded" onClick={(e) => { e.stopPropagation(); navigate(`/results/${item.optimization_id}`) }}>
+                    <td className="py-3 px-4 flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <a
+                        href={optimizationApi.getModelDownloadUrl(item.optimization_id)}
+                        download
+                        className="p-1.5 text-brand-400 hover:bg-brand-900/50 rounded transition-colors"
+                        title="Download Model (.joblib)"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                      <a
+                        href={optimizationApi.getReportDownloadUrl(item.optimization_id)}
+                        download
+                        className="p-1.5 text-emerald-400 hover:bg-emerald-900/50 rounded transition-colors"
+                        title="Download PDF Report"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </a>
+                      <button className="p-1.5 text-brand-400 hover:bg-brand-900/50 rounded" title="View Results" onClick={(e) => { e.stopPropagation(); navigate(`/results/${item.optimization_id}`) }}>
                         <BarChart2 className="w-4 h-4" />
                       </button>
-                      <button className="p-1.5 text-red-400 hover:bg-red-900/50 rounded" onClick={(e) => handleDelete(e, item.id)}>
+                      <button className="p-1.5 text-red-400 hover:bg-red-900/50 rounded" title="Delete" onClick={(e) => handleDelete(e, item.id)}>
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
